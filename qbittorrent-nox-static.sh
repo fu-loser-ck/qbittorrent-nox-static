@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+export cpu=skylake
+export CFLAGS="-march=$cpu -mtune=$cpu"
+export CXXFLAGS="-march=$cpu -mtune=$cpu"
 #
 # cSpell:includeRegExp #.*
 #
