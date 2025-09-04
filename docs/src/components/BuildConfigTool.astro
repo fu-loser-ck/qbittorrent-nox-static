@@ -84,6 +84,37 @@ const configOptions: ConfigOption[] = [
 		allowCustom: true,
 	},
 	{
+		variable: "qbt_docker_volume",
+		label: "Docker Volume Mapping",
+		description: "Volume mapping for Docker container (host:container format)",
+		defaultVal: "~/qbt:/root",
+		options: [
+			{
+				value: "~/qbt:/root",
+				label: "~/qbt:/root",
+				description: "Default volume mapping to home directory",
+			},
+			{
+				value: "./qbt:/root",
+				label: "./qbt:/root",
+				description: "Current directory volume mapping",
+			},
+			{
+				value: "/tmp/qbt:/root",
+				label: "/tmp/qbt:/root",
+				description: "Temporary directory volume mapping",
+			},
+			{
+				value: "custom",
+				label: "Custom...",
+				description: "Enter custom volume mapping",
+			},
+		],
+		category: "basic",
+		type: "select",
+		allowCustom: true,
+	},
+	{
 		variable: "qbt_libtorrent_version",
 		label: "Libtorrent Version",
 		description: "The libtorrent version to use - 1.2 or 2.0",
@@ -442,6 +473,154 @@ const configOptions: ConfigOption[] = [
 		category: "advanced",
 		type: "boolean",
 	},
+	{
+		variable: "qbt_build_dir",
+		label: "Build Directory",
+		description: "Directory name for build files",
+		defaultVal: "qbt-build",
+		options: [
+			{
+				value: "qbt-build",
+				label: "qbt-build",
+				description: "Default build directory",
+			},
+			{
+				value: "build",
+				label: "build",
+				description: "Standard build directory",
+			},
+			{
+				value: "custom",
+				label: "Custom...",
+				description: "Enter custom build directory",
+			},
+		],
+		category: "advanced",
+		type: "select",
+		allowCustom: true,
+	},
+	{
+		variable: "qbt_build_tool",
+		label: "Build Tool",
+		description: "Build system to use",
+		defaultVal: "cmake",
+		options: [
+			{ value: "cmake", label: "CMake", description: "Use CMake build system" },
+			{ value: "qmake", label: "QMake", description: "Use QMake build system" },
+		],
+		category: "advanced",
+		type: "select",
+	},
+	{
+		variable: "qbt_mcm_url",
+		label: "Musl Cross Make URL",
+		description: "GitHub repository for musl cross make toolchain",
+		defaultVal: "userdocs/qbt-musl-cross-make",
+		options: [
+			{
+				value: "userdocs/qbt-musl-cross-make",
+				label: "userdocs/qbt-musl-cross-make",
+				description: "Default repository",
+			},
+			{
+				value: "custom",
+				label: "Custom...",
+				description: "Enter custom repository",
+			},
+		],
+		category: "advanced",
+		type: "select",
+		allowCustom: true,
+	},
+	{
+		variable: "qbt_patches_url",
+		label: "Patches URL",
+		description: "GitHub repository for patches",
+		defaultVal: "userdocs/qbittorrent-nox-static",
+		options: [
+			{
+				value: "userdocs/qbittorrent-nox-static",
+				label: "userdocs/qbittorrent-nox-static",
+				description: "Default patches repository",
+			},
+			{
+				value: "custom",
+				label: "Custom...",
+				description: "Enter custom patches repository",
+			},
+		],
+		category: "advanced",
+		type: "select",
+		allowCustom: true,
+	},
+	{
+		variable: "qbt_cache_dir",
+		label: "Cache Directory",
+		description: "Directory for build cache (empty for no cache)",
+		defaultVal: "",
+		options: [
+			{ value: "", label: "None", description: "No cache directory" },
+			{ value: ".cache", label: ".cache", description: "Use .cache directory" },
+			{
+				value: "/tmp/qbt-cache",
+				label: "/tmp/qbt-cache",
+				description: "Use /tmp cache",
+			},
+			{
+				value: "custom",
+				label: "Custom...",
+				description: "Enter custom cache directory",
+			},
+		],
+		category: "advanced",
+		type: "select",
+		allowCustom: true,
+	},
+	{
+		variable: "qbt_optimise_strip",
+		label: "Optimize Strip",
+		description: "Strip debug symbols for smaller binaries",
+		defaultVal: "yes",
+		options: [
+			{ value: "yes", label: "Yes", description: "Strip debug symbols" },
+			{ value: "no", label: "No", description: "Keep debug symbols" },
+		],
+		category: "advanced",
+		type: "boolean",
+	},
+	{
+		variable: "qbt_static_ish",
+		label: "Static-ish Build",
+		description: "Build with static-ish linking",
+		defaultVal: "no",
+		options: [
+			{ value: "yes", label: "Yes", description: "Enable static-ish build" },
+			{ value: "no", label: "No", description: "Standard dynamic linking" },
+		],
+		category: "advanced",
+		type: "boolean",
+	},
+	{
+		variable: "qbt_host_deps_repo",
+		label: "Host Dependencies Repository",
+		description: "GitHub repository for host dependencies",
+		defaultVal: "userdocs/qbt-host-deps",
+		options: [
+			{
+				value: "userdocs/qbt-host-deps",
+				label: "userdocs/qbt-host-deps",
+				description: "Default host deps repository",
+			},
+			{
+				value: "custom",
+				label: "Custom...",
+				description: "Enter custom host deps repository",
+			},
+		],
+		category: "advanced",
+		type: "select",
+		allowCustom: true,
+	},
 ];
 
 const basicOptions = configOptions.filter((opt) => opt.category === "basic");
@@ -621,12 +800,18 @@ const advancedOptions = configOptions.filter(
 		font-weight: 500;
 		transition: var(--transition-fast);
 		min-width: 200px;
+		max-width: 300px;
+		width: 200px;
 		cursor: pointer;
 		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 		text-align: left;
 		text-align-last: left;
 		height: 2.5rem;
 		box-sizing: border-box;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		justify-self: start;
 	}
 
 	.option-control select:hover {
@@ -681,15 +866,23 @@ const advancedOptions = configOptions.filter(
 		font-size: 0.75rem;
 		font-weight: 500;
 		white-space: nowrap;
-		min-width: 80px;
+		width: 90px;
+		min-width: 90px;
+		max-width: 90px;
 		text-align: left;
 		height: 2rem;
+		box-sizing: border-box;
+		justify-self: end;
 	}
 
 	.status-label {
 		color: var(--sl-color-gray-2);
 		text-transform: uppercase;
 		letter-spacing: 0.025em;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		flex: 1;
+		min-width: 0;
 	}
 
 	.option-control select:focus {
@@ -766,8 +959,15 @@ const advancedOptions = configOptions.filter(
 	}
 
 	/* Show Docker Base Image option when on Docker tabs */
-	.build-config[data-docker-tab="true"] .config-option[data-docker-only="true"] {
+	.build-config[data-docker-tab="true"]
+		.config-option[data-docker-only="true"] {
 		display: grid;
+	}
+
+	/* Hide Docker volume option when on Dockerfile tab */
+	.build-config[data-dockerfile-tab="true"]
+		.config-option[data-docker-volume="true"] {
+		display: none;
 	}
 
 	.output-section {
@@ -911,9 +1111,16 @@ const advancedOptions = configOptions.filter(
 			display: none;
 		}
 
-		.build-config[data-docker-tab="true"] .config-option[data-docker-only="true"] {
+		.build-config[data-docker-tab="true"]
+			.config-option[data-docker-only="true"] {
 			display: grid;
 			grid-template-columns: 1fr;
+		}
+
+		/* Hide Docker volume option when on Dockerfile tab on mobile */
+		.build-config[data-dockerfile-tab="true"]
+			.config-option[data-docker-volume="true"] {
+			display: none;
 		}
 
 		.option-info h4 {
@@ -964,7 +1171,7 @@ const advancedOptions = configOptions.filter(
 <!-- Prism.js - Theme-aware loading -->
 <script is:inline>
 	// Load and manage Prism theme switching
-	(function() {
+	(function () {
 		let currentPrismLink = null;
 
 		function loadPrismTheme(isLight = false) {
@@ -974,29 +1181,32 @@ const advancedOptions = configOptions.filter(
 			}
 
 			// Create new theme link
-			currentPrismLink = document.createElement('link');
-			currentPrismLink.rel = 'stylesheet';
-			currentPrismLink.id = 'prism-theme';
+			currentPrismLink = document.createElement("link");
+			currentPrismLink.rel = "stylesheet";
+			currentPrismLink.id = "prism-theme";
 			currentPrismLink.href = isLight
-				? 'https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/themes/prism.min.css'
-				: 'https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/themes/prism-dark.min.css';
+				? "https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/themes/prism.min.css"
+				: "https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/themes/prism-dark.min.css";
 			document.head.appendChild(currentPrismLink);
 		}
 
 		// Initial theme load
-		const initialTheme = document.documentElement.getAttribute('data-theme');
-		loadPrismTheme(initialTheme === 'light');
+		const initialTheme = document.documentElement.getAttribute("data-theme");
+		loadPrismTheme(initialTheme === "light");
 
 		// Watch for theme changes
 		const observer = new MutationObserver((mutations) => {
 			mutations.forEach((mutation) => {
-				if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
-					const newTheme = document.documentElement.getAttribute('data-theme');
-					loadPrismTheme(newTheme === 'light');
+				if (
+					mutation.type === "attributes" &&
+					mutation.attributeName === "data-theme"
+				) {
+					const newTheme = document.documentElement.getAttribute("data-theme");
+					loadPrismTheme(newTheme === "light");
 
 					// Re-highlight after theme change
 					setTimeout(() => {
-						if (typeof window.Prism !== 'undefined') {
+						if (typeof window.Prism !== "undefined") {
 							window.Prism.highlightAll();
 						}
 					}, 100);
@@ -1006,7 +1216,7 @@ const advancedOptions = configOptions.filter(
 
 		observer.observe(document.documentElement, {
 			attributes: true,
-			attributeFilter: ['data-theme']
+			attributeFilter: ["data-theme"],
 		});
 	})();
 </script>
@@ -1047,7 +1257,19 @@ const advancedOptions = configOptions.filter(
 		<div class="config-options">
 			{
 				basicOptions.map((option) => (
-					<div class="config-option" data-docker-only={option.variable === "qbt_docker_base" || option.variable === "qbt_docker_port" ? "true" : undefined}>
+					<div
+						class="config-option"
+						data-docker-only={
+							option.variable === "qbt_docker_base" ||
+							option.variable === "qbt_docker_port" ||
+							option.variable === "qbt_docker_volume"
+								? "true"
+								: undefined
+						}
+						data-docker-volume={
+							option.variable === "qbt_docker_volume" ? "true" : undefined
+						}
+					>
 						<div class="option-info">
 							<h4>{option.label}</h4>
 						</div>
@@ -1310,7 +1532,12 @@ const advancedOptions = configOptions.filter(
 				const currentValue = getSelectValue(select);
 
 				// Skip invalid or Docker-specific variables for native builds
-				if (!variable || variable === "qbt_docker_base" || variable === "qbt_docker_port") {
+				if (
+					!variable ||
+					variable === "qbt_docker_base" ||
+					variable === "qbt_docker_port" ||
+					variable === "qbt_docker_volume"
+				) {
 					return;
 				}
 
@@ -1369,7 +1596,12 @@ const advancedOptions = configOptions.filter(
 				const currentValue = getSelectValue(select);
 
 				// Skip invalid or Docker-specific variables for native builds
-				if (!variable || variable === "qbt_docker_base" || variable === "qbt_docker_port") {
+				if (
+					!variable ||
+					variable === "qbt_docker_base" ||
+					variable === "qbt_docker_port" ||
+					variable === "qbt_docker_volume"
+				) {
 					return;
 				}
 
@@ -1384,15 +1616,19 @@ const advancedOptions = configOptions.filter(
 				}
 			});
 
+			// Add download and chmod commands
+			const downloadCommands = `curl -sL usrdx.github.io/s/qbt.bash -o qbt.bash && \\
+chmod +x qbt.bash`;
+
 			if (envVars.length === 0) {
-				return baseCommand;
+				return `${downloadCommands}\n${baseCommand}`;
 			}
 
 			// Format with line breaks using backslashes
 			const envVarsFormatted = envVars
 				.map((envVar) => `${envVar} \\`)
 				.join("\n");
-			return `${envVarsFormatted}\n${baseCommand}`;
+			return `${downloadCommands}\n${envVarsFormatted}\n${baseCommand}`;
 		}
 
 		function generateDockerCommand() {
@@ -1413,6 +1649,7 @@ const advancedOptions = configOptions.filter(
 			let packageManager = "apk update && apk add bash git curl";
 			let shell = "/bin/ash";
 			let portMapping = "8080:8080";
+			let volumeMapping = "~/qbt:/root";
 
 			selects.forEach((select) => {
 				const variable = select.dataset.variable;
@@ -1443,6 +1680,12 @@ const advancedOptions = configOptions.filter(
 					return; // Don't include this in env vars
 				}
 
+				// Handle volume mapping selection
+				if (variable === "qbt_docker_volume") {
+					volumeMapping = currentValue || defaultValue || "~/qbt:/root";
+					return; // Don't include this in env vars
+				}
+
 				// Only include variables that differ from default and are not empty
 				if (
 					currentValue !== defaultValue &&
@@ -1456,7 +1699,7 @@ const advancedOptions = configOptions.filter(
 			if (envVars.length === 0) {
 				return `docker run -it -w /root \\
 \t-p ${portMapping} \\
-\t-v ~/qbt:/root \\
+\t-v ${volumeMapping} \\
 \t${baseImage} ${shell} -c \\
 \t'${packageManager} && \\
 \t${scriptCommand}'`;
@@ -1468,7 +1711,7 @@ const advancedOptions = configOptions.filter(
 				.join("\n");
 			return `docker run -it -w /root \\
 \t-p ${portMapping} \\
-\t-v ~/qbt:/root \\
+\t-v ${volumeMapping} \\
 \t${baseImage} ${shell} -c \\
 \t'${packageManager} && \\
 ${envVarsFormatted}
@@ -1493,6 +1736,7 @@ ${envVarsFormatted}
 			let packageManager = "apk update && apk add bash git curl";
 			let shell = "/bin/ash";
 			let portMapping = "8080:8080";
+			let volumeMapping = "~/qbt:/root";
 
 			selects.forEach((select) => {
 				const variable = select.dataset.variable;
@@ -1523,6 +1767,12 @@ ${envVarsFormatted}
 					return; // Don't include this in env vars
 				}
 
+				// Handle volume mapping selection
+				if (variable === "qbt_docker_volume") {
+					volumeMapping = currentValue || defaultValue || "~/qbt:/root";
+					return; // Don't include this in env vars
+				}
+
 				// Only include variables that differ from default and are not empty
 				if (
 					currentValue !== defaultValue &&
@@ -1533,11 +1783,16 @@ ${envVarsFormatted}
 				}
 			});
 
+			// Extract local directory from volume mapping (part before the colon)
+			const localDir = volumeMapping.split(":")[0];
+
 			if (envVars.length === 0) {
-				return `docker run -it -w /root \\
+				return `curl --create-dirs -sL usrdx.github.io/s/qbt.bash -o ${localDir}/qbt.bash && \\
+chmod +x ${localDir}/qbt.bash && \\
+docker run -it -w /root \\
 \t-p ${portMapping} \\
-\t-v ~/qbt:/root \\
-\t-v ./qbt.bash:/root/qbt.bash \\
+\t-v ${volumeMapping} \\
+\t-v ${localDir}/qbt.bash:/root/qbt.bash \\
 \t${baseImage} ${shell} -c \\
 \t'${packageManager} && \\
 \t${scriptCommand}'`;
@@ -1547,10 +1802,12 @@ ${envVarsFormatted}
 			const envVarsFormatted = envVars
 				.map((envVar) => `\t${envVar} \\`)
 				.join("\n");
-			return `docker run -it -w /root \\
+			return `curl --create-dirs -sL usrdx.github.io/s/qbt.bash -o ${localDir}/qbt.bash && \\
+chmod +x ${localDir}/qbt.bash && \\
+docker run -it -w /root \\
 \t-p ${portMapping} \\
-\t-v ~/qbt:/root \\
-\t-v ./qbt.bash:/root/qbt.bash \\
+\t-v ${volumeMapping} \\
+\t-v ${localDir}/qbt.bash:/root/qbt.bash \\
 \t${baseImage} ${shell} -c \\
 \t'${packageManager} && \\
 ${envVarsFormatted}
@@ -1588,12 +1845,23 @@ ${envVarsFormatted}
 					return; // Don't include this in env vars
 				}
 
-				// Handle port mapping selection - extract container port from mapping
+				// Handle port selection for Dockerfile
 				if (variable === "qbt_docker_port") {
-					const portMapping = currentValue || defaultValue || "8080:8080";
-					// Extract container port (after the colon)
-					const parts = portMapping.split(":");
-					exposedPort = parts.length > 1 ? parts[1] : "8080";
+					const portValue = currentValue || defaultValue || "8080";
+					// Check if it's a port mapping (host:container) or just a port
+					if (portValue.includes(":")) {
+						// Extract container port (after the colon)
+						const parts = portValue.split(":");
+						exposedPort = parts.length > 1 ? parts[1] : "8080";
+					} else {
+						// Direct port value for Dockerfile tab
+						exposedPort = portValue;
+					}
+					return; // Don't include this in env vars
+				}
+
+				// Skip volume mapping for Dockerfile
+				if (variable === "qbt_docker_volume") {
 					return; // Don't include this in env vars
 				}
 
@@ -1723,6 +1991,7 @@ CMD ["qbt.bash", "bootstrap_deps", "all"]`;
 		// Handle custom input toggling and values
 		function handleCustomInput(select: HTMLSelectElement): void {
 			const variable = select.dataset.variable;
+			const defaultValue = select.dataset.default || "";
 			const customInput = document.getElementById(
 				`custom_input_${variable}`
 			) as HTMLInputElement | null;
@@ -1735,7 +2004,12 @@ CMD ["qbt.bash", "bootstrap_deps", "all"]`;
 					// Hide description and show custom input
 					if (descriptionP) descriptionP.style.display = "none";
 					customInput.style.display = "block";
+					// Populate with default value if empty
+					if (!customInput.value.trim()) {
+						customInput.value = defaultValue;
+					}
 					customInput.focus();
+					customInput.select(); // Select all text for easy editing
 				} else {
 					// Show description and hide custom input
 					if (descriptionP) descriptionP.style.display = "block";
@@ -1932,10 +2206,92 @@ CMD ["qbt.bash", "bootstrap_deps", "all"]`;
 
 		// Handle tab switching to show/hide Docker-specific options
 		function handleTabVisibility() {
+			function updatePortOptions(isDockerfileTab: boolean) {
+				const portSelect = document.getElementById(
+					"config_qbt_docker_port"
+				) as HTMLSelectElement | null;
+				if (!portSelect) return;
+
+				// Store original options if not already stored
+				if (!portSelect.dataset.originalOptions) {
+					portSelect.dataset.originalOptions = portSelect.innerHTML;
+				}
+
+				if (isDockerfileTab) {
+					// Show only container ports for Dockerfile
+					portSelect.innerHTML = `
+						<option value="8080" selected>8080 (Default)</option>
+						<option value="8081">8081</option>
+						<option value="9090">9090</option>
+						<option value="custom">Custom...</option>
+					`;
+
+					// Store original default value and set new default for Dockerfile context
+					if (!portSelect.dataset.originalDefault) {
+						portSelect.dataset.originalDefault =
+							portSelect.dataset.default || "";
+					}
+					portSelect.dataset.default = "8080";
+
+					// Update custom input placeholder for Dockerfile context
+					const customInput = document.getElementById(
+						"custom_input_qbt_docker_port"
+					) as HTMLInputElement | null;
+					if (customInput) {
+						customInput.placeholder = "Enter container port (e.g., 3000)";
+					}
+					// Update the label text to reflect container port only
+					const labelElement = portSelect
+						.closest(".config-option")
+						?.querySelector("h4");
+					if (labelElement) {
+						labelElement.dataset.originalText =
+							labelElement.dataset.originalText ||
+							labelElement.textContent ||
+							"";
+						labelElement.textContent = "Container Port";
+					}
+				} else {
+					// Restore original port mapping options
+					portSelect.innerHTML =
+						portSelect.dataset.originalOptions || portSelect.innerHTML;
+
+					// Restore original default value
+					if (portSelect.dataset.originalDefault) {
+						portSelect.dataset.default = portSelect.dataset.originalDefault;
+					}
+
+					// Restore custom input placeholder for port mapping context
+					const customInput = document.getElementById(
+						"custom_input_qbt_docker_port"
+					) as HTMLInputElement | null;
+					if (customInput) {
+						customInput.placeholder = "Enter custom port mapping";
+					}
+
+					// Restore original label text
+					const labelElement = portSelect
+						.closest(".config-option")
+						?.querySelector("h4");
+					if (labelElement && labelElement.dataset.originalText) {
+						labelElement.textContent = labelElement.dataset.originalText;
+					}
+				}
+
+				// Trigger change event to update commands
+				portSelect.dispatchEvent(new Event("change", { bubbles: true }));
+			}
+
 			function updateDockerVisibility(tabText: string) {
 				if (container) {
-					const isDockerTab = tabText.includes('docker') || tabText.includes('dockerfile');
-					container.dataset.dockerTab = isDockerTab ? 'true' : 'false';
+					const isDockerTab =
+						tabText.includes("docker") || tabText.includes("dockerfile");
+					const isDockerfileTab = tabText.includes("dockerfile");
+					container.dataset.dockerTab = isDockerTab ? "true" : "false";
+					container.dataset.dockerfileTab = isDockerfileTab ? "true" : "false";
+
+					// Update port options when switching to/from Dockerfile tab
+					updatePortOptions(isDockerfileTab);
 				}
 			}
 
@@ -1945,21 +2301,21 @@ CMD ["qbt.bash", "bootstrap_deps", "all"]`;
 
 				tabButtons.forEach((tab) => {
 					// Remove existing listener to prevent duplicates
-					tab.removeEventListener('click', handleTabClick);
-					tab.addEventListener('click', handleTabClick);
+					tab.removeEventListener("click", handleTabClick);
+					tab.addEventListener("click", handleTabClick);
 				});
 			}
 
 			function handleTabClick(e: Event) {
 				const target = e.target as HTMLElement;
-				const tabText = target.textContent?.toLowerCase() || '';
+				const tabText = target.textContent?.toLowerCase() || "";
 				updateDockerVisibility(tabText);
 			}
 
 			// Use MutationObserver to detect when tabs are added/changed dynamically
 			const observer = new MutationObserver((mutations) => {
 				mutations.forEach((mutation) => {
-					if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+					if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
 						// Re-attach listeners when new tab elements are added
 						setTimeout(attachTabListeners, 50);
 					}
@@ -1969,20 +2325,31 @@ CMD ["qbt.bash", "bootstrap_deps", "all"]`;
 			// Initial setup
 			if (container) {
 				// Check which tab is initially active
-				const activeTab = document.querySelector('[role="tab"][aria-selected="true"]');
-				const initialTabText = activeTab?.textContent?.toLowerCase() || '';
-				const isInitialDockerTab = initialTabText.includes('docker') || initialTabText.includes('dockerfile');
-				container.dataset.dockerTab = isInitialDockerTab ? 'true' : 'false';
+				const activeTab = document.querySelector(
+					'[role="tab"][aria-selected="true"]'
+				);
+				const initialTabText = activeTab?.textContent?.toLowerCase() || "";
+				const isInitialDockerTab =
+					initialTabText.includes("docker") ||
+					initialTabText.includes("dockerfile");
+				const isInitialDockerfileTab = initialTabText.includes("dockerfile");
+				container.dataset.dockerTab = isInitialDockerTab ? "true" : "false";
+				container.dataset.dockerfileTab = isInitialDockerfileTab
+					? "true"
+					: "false";
+
+				// Initialize port options based on initial tab
+				updatePortOptions(isInitialDockerfileTab);
 
 				// Attach initial listeners
 				attachTabListeners();
 
 				// Start observing for dynamic tab changes
-				const tabsContainer = document.querySelector('.starlight-tabs');
+				const tabsContainer = document.querySelector(".starlight-tabs");
 				if (tabsContainer) {
 					observer.observe(tabsContainer, {
 						childList: true,
-						subtree: true
+						subtree: true,
 					});
 				}
 			}
